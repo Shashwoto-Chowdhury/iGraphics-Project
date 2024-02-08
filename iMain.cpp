@@ -26,6 +26,8 @@ int cnt=0;
 asteroids asteroid[asteroid_number];
 f_bullet own_bullet[bullet_number];
 int score=0;
+double score_x=700;
+double score_y=740;
 
 double collision_x,collision_y;
 bool collision_check=false;
@@ -57,6 +59,8 @@ char spaceship[30]="images\\spaceship.bmp";
 char asteroid_image[30]="images\\asteroid.bmp";
 char my_bullet[30]="images\\sbullet.bmp";
 char collision[30]="images\\collision.bmp";
+
+char score_text[30]="Score: 0";
 
 
 
@@ -94,6 +98,7 @@ void iDraw() {
 	if(page_state==1){
 		iShowBMP(0,0,img[page_state]);
 		iShowBMP2(space_x,space_y,spaceship,0);
+		iText(score_x,score_y,score_text,GLUT_BITMAP_TIMES_ROMAN_24);
 		asteroid_show();
 		bulletshow();
 		if(collision_check){
@@ -317,19 +322,23 @@ void bullet_change()
 void asteroid_collision_check()
 {
 	int i,j;
-	for(i=1;i<bullet_number;i++){
-		for(j=0;j<asteroid_number;j++){
-			if((own_bullet[i].x+10 > asteroid[j].x && own_bullet[i].x < asteroid[j].x+40) && (own_bullet[i].y+15 > asteroid[j].y && own_bullet[i].y < asteroid[j].y+40)){
-				own_bullet[i].bullet_show=false;
-				collision_check=true;
-				own_bullet[i].y=-20;
-				asteroid[j].alive=false;
-				asteroid[j].dx=5;
-				asteroid[j].dy=5;
-				collision_x=asteroid[j].x;
-				collision_y=asteroid[j].y;
-				asteroid[j].in=false;
-				break;
+	if(page_state==1){
+		for(i=1;i<bullet_number;i++){
+			for(j=0;j<asteroid_number;j++){
+				if((own_bullet[i].x+10 > asteroid[j].x && own_bullet[i].x < asteroid[j].x+40) && (own_bullet[i].y+15 > asteroid[j].y && own_bullet[i].y < asteroid[j].y+40)){
+					own_bullet[i].bullet_show=false;
+					collision_check=true;
+					own_bullet[i].y=-20;
+					asteroid[j].alive=false;
+					asteroid[j].dx=5;
+					asteroid[j].dy=5;
+					collision_x=asteroid[j].x;
+					collision_y=asteroid[j].y;
+					asteroid[j].in=false;
+					score+=10;
+					sprintf(score_text,"Score: %d",score);
+					break;
+				}
 			}
 		}
 	}
