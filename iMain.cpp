@@ -20,13 +20,16 @@ struct f_bullet{
 
 double space_x=370;
 double space_y=0;
-double space_health=200;
+
+int space_health=200;
+double health_x=650;
+double health_y=710; 
 
 int cnt=0;
 asteroids asteroid[asteroid_number];
 f_bullet own_bullet[bullet_number];
 int score=0;
-double score_x=700;
+double score_x=650;
 double score_y=740;
 
 double collision_x,collision_y;
@@ -38,6 +41,7 @@ int col_cnt=0;
 int page_state=0;
 bool music_on=true;
 bool gmusic_on=true;
+bool pause=false;
 
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
@@ -61,6 +65,7 @@ char my_bullet[30]="images\\sbullet.bmp";
 char collision[30]="images\\collision.bmp";
 
 char score_text[30]="Score: 0";
+char health[30]="Health: 200";
 
 
 
@@ -98,7 +103,10 @@ void iDraw() {
 	if(page_state==1){
 		iShowBMP(0,0,img[page_state]);
 		iShowBMP2(space_x,space_y,spaceship,0);
+		iSetColor(44,166,43);
 		iText(score_x,score_y,score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iSetColor(255,255,255);
+		iText(health_x,health_y,health,GLUT_BITMAP_TIMES_ROMAN_24);
 		asteroid_show();
 		bulletshow();
 		if(collision_check){
@@ -193,6 +201,17 @@ void asteroid_clear()
 		asteroid[i].dy=5;
 	}
 }
+void score_clear()
+{
+	score=0;
+	sprintf(score_text,"Score: %d",score);
+}
+void health_init()
+{
+	space_health=200;
+	sprintf(health,"Health: %d",space_health);
+}
+
 void iMouse(int button, int state, int mx, int my) {
 	if(page_state==0){
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=30&&my<=130){
@@ -220,7 +239,7 @@ void iMouse(int button, int state, int mx, int my) {
 	}
 	if(page_state==1){
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-			bullet_initialize();
+			if(!pause)bullet_initialize();
 		}
 	}
 	if(page_state==3){
@@ -257,23 +276,37 @@ void iKeyboard(unsigned char key) {
 	}
 	if(page_state==1){
 		if(key == 'a'){
-			space_x-=5;
-			if(space_x<=0){
-				space_x=0;
+			if(!pause){
+				space_x-=5;
+				if(space_x<=0){
+					space_x=0;
+				}
 			}
 		}
 		if(key == 'd'){
-			space_x+=5;
-			if(space_x>=(screen_width-90)){
-				space_x=screen_width-90;
+			if(!pause){
+				space_x+=5;
+				if(space_x>=(screen_width-90)){
+					space_x=screen_width-90;
+				}
 			}
 		}
-	}
-	if(key == 'w'&&page_state==1){
-		page_state=0;
-		cnt=0;
-		bullet_clear();
-		asteroid_clear();
+		if(key == 'w'){
+			page_state=0;
+			cnt=0;
+			bullet_clear();
+			asteroid_clear();
+			score_clear();
+			health_init();
+		}
+		if(key == 'p'){
+			if(pause){
+				pause=false;
+			}
+			else{
+				pause=true;
+			}
+		}
 	}
 	
 	//place your codes for other keys here
@@ -287,7 +320,7 @@ void iSpecialKeyboard(unsigned char key) {
 void asteroid_change()
 {
 	int i;
-	if(page_state==1){
+	if(page_state==1 && !pause){
 		for(i=0;i<asteroid_number;i++){
 			if(asteroid[i].alive){
 				asteroid[i].x-=asteroid[i].dx;
@@ -312,9 +345,15 @@ void asteroid_change()
 void bullet_change()
 {
 	int i;
-	if(page_state==1){
+	if(page_state==1 && !pause){
 		for(i=1;i<bullet_number;i++){
-			if(own_bullet[i].bullet_show)own_bullet[i].y+=5;
+			if(own_bullet[i].bullet_show){
+				own_bullet[i].y+=5;
+				if(own_bullet[i].y>=screen_height){
+					own_bullet[i].bullet_show=false;
+					own_bullet[i].y=-20;
+				}
+			}
 		}
 	}
 }
@@ -322,32 +361,57 @@ void bullet_change()
 void asteroid_collision_check()
 {
 	int i,j;
-	if(page_state==1){
+	if(page_state==1 && !pause){
 		for(i=1;i<bullet_number;i++){
-			for(j=0;j<asteroid_number;j++){
-				if((own_bullet[i].x+10 > asteroid[j].x && own_bullet[i].x < asteroid[j].x+40) && (own_bullet[i].y+15 > asteroid[j].y && own_bullet[i].y < asteroid[j].y+40)){
-					own_bullet[i].bullet_show=false;
-					collision_check=true;
-					own_bullet[i].y=-20;
-					asteroid[j].alive=false;
-					asteroid[j].dx=5;
-					asteroid[j].dy=5;
-					collision_x=asteroid[j].x;
-					collision_y=asteroid[j].y;
-					asteroid[j].in=false;
-					score+=10;
-					sprintf(score_text,"Score: %d",score);
-					break;
+			if(own_bullet[i].bullet_show){
+				for(j=0;j<asteroid_number;j++){
+					if((own_bullet[i].x+10 > asteroid[j].x && own_bullet[i].x < asteroid[j].x+40) && (own_bullet[i].y+15 > asteroid[j].y && own_bullet[i].y < asteroid[j].y+40)){
+						own_bullet[i].bullet_show=false;
+						collision_check=true;
+						own_bullet[i].y=-20;
+						asteroid[j].alive=false;
+						asteroid[j].dx=5;
+						asteroid[j].dy=5;
+						collision_x=asteroid[j].x;
+						collision_y=asteroid[j].y;
+						asteroid[j].in=false;
+						score+=10;
+						sprintf(score_text,"Score: %d",score);
+						break;
+					}
 				}
 			}
 		}
 	}
 }
 
+void spaceship_collision()
+{
+	int i;
+	if(page_state==1 && !pause){
+		for(i=0;i<asteroid_number;i++){
+			if((space_x+90 > asteroid[i].x && space_x < asteroid[i].x+40) && (space_y+90 > asteroid[i].y && space_y < asteroid[i].y+40)){
+				asteroid[i].alive=false;
+				asteroid[i].dx=5;
+				asteroid[i].dy=5;
+				collision_x=asteroid[i].x;
+				collision_y=asteroid[i].y-10;
+				collision_check=true;
+				asteroid[i].in=false;
+				space_health-=10;
+				sprintf(health,"Health: %d",space_health);
+				break;
+			}
+		}
+	}
+}
+
+
 int main() {
 	iSetTimer(25,asteroid_change);
 	iSetTimer(25,bullet_change);
 	iSetTimer(25,asteroid_collision_check);
+	iSetTimer(25,spaceship_collision);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
