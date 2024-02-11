@@ -55,6 +55,9 @@ bool gmusic_on=true;
 bool pause=false;
 bool boulder_active=false;
 
+double healbox_x,healbox_y;
+bool healbox_active=false;
+
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
 
@@ -77,6 +80,7 @@ char boulder[30]="images\\boulder.bmp";
 char my_bullet[30]="images\\sbullet.bmp";
 char collision[30]="images\\collision.bmp";
 char collision2[30]="images\\collision2.bmp";
+char healbox[30]="images\\health.bmp";
 
 char score_text[30]="Score: 0";
 char health[30]="Health: 200";
@@ -110,6 +114,12 @@ void boulder_show()
 		}
 	}
 }
+void healbox_show()
+{
+	if(healbox_active){
+		iShowBMP2(healbox_x,healbox_y,healbox,0);
+	}
+}
 void iDraw() {
 	//place your drawing codes here
 	iClear();
@@ -133,6 +143,7 @@ void iDraw() {
 		asteroid_show();
 		bulletshow();
 		boulder_show();
+		healbox_show();
 		if(collision_check){
 			iShowBMP2(collision_x,collision_y,collision,0);
 			col_cnt++;
@@ -522,6 +533,30 @@ void spaceship_boulder_collision()
 	}
 
 }
+void healbox_move()
+{
+	if(healbox_active && !pause){
+		healbox_y-=5;
+		if(healbox_y<=-30){
+			healbox_active=false;
+		}
+		if((healbox_x+30 > space_x && healbox_x < space_x+90) && (healbox_y+30 > space_y && healbox_y < space_y+90)){
+			healbox_active=false;
+			space_health+=20;
+			if(space_health>200)space_health=200;
+			sprintf(health,"Health: %d",space_health);
+		}
+	}
+}
+void healbox_init()
+{
+	if(space_health<=80 && !healbox_active){
+		healbox_active=true;
+		healbox_x=rand()%800;
+		if(healbox_x<30)healbox_x=30;
+		healbox_y=screen_height+rand()%200;
+	}
+}
 
 int main() {
 	iSetTimer(25,asteroid_change);
@@ -531,6 +566,8 @@ int main() {
 	iSetTimer(25,boulder_collision_check);
 	iSetTimer(25,spaceship_asteroid_collision);
 	iSetTimer(25,spaceship_boulder_collision);
+	iSetTimer(10000,healbox_init);
+	iSetTimer(25,healbox_move);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
