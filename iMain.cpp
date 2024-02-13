@@ -12,7 +12,7 @@ struct asteroids{
 	double x;
 	double y;
 	bool alive,in=false;
-	double dx=4,dy=4;
+	double dx=2.5,dy=2.5;
 };
 struct f_bullet{
 	double x,y;
@@ -59,8 +59,10 @@ double healbox_x,healbox_y;
 bool healbox_active=false;
 
 double laser_x,laser_y;
-bool laser_active=false;
-int laser_cnt=0;
+double laser_state_x=650,laser_state_y=680;
+bool laser_active=false,laser_usable=false;
+int laser_cnt=0,laser_hp=0;
+char laser_status[30]="Laser: Not Ready";
 
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
@@ -133,7 +135,7 @@ void bullet_change()
 	if(!pause){
 		for(i=1;i<bullet_number;i++){
 			if(own_bullet[i].bullet_show){
-				own_bullet[i].y+=5;
+				own_bullet[i].y+=3;
 				if(own_bullet[i].y>=screen_height){
 					own_bullet[i].bullet_show=false;
 					own_bullet[i].y=-20;
@@ -158,7 +160,7 @@ void boulder_change()
 	if(!pause && boulder_active){
 		for(i=0;i<7;i++){
 			if(space_boulder[i].alive){
-				space_boulder[i].y-=4;
+				space_boulder[i].y-=3;
 				if(space_boulder[i].y<=-60){
 					space_boulder[i].x=rand()%780;
 					if(space_boulder[i].x<60)space_boulder[i].x=60;
@@ -192,7 +194,7 @@ void healbox_show()
 		iShowBMP2(healbox_x,healbox_y,healbox,0);
 	}
 	if(healbox_active && !pause){
-		healbox_y-=5;
+		healbox_y-=2.5;
 		if(healbox_y<=-30){
 			healbox_active=false;
 		}
@@ -210,7 +212,23 @@ void laser_show(){
 	}
 	if(!pause && laser_active){
 		laser_x=space_x+35;
+		laser_hp--;
+		if(laser_hp<=0){
+			laser_active=false;
+			laser_usable=false;
+			sprintf(laser_status,"Laser: Not Ready");
+		}
 	}
+	if(!pause && !laser_active){
+		if(laser_hp>=500){
+			laser_usable=true;
+			sprintf(laser_status,"Laser: Ready");
+		}
+		else 
+			laser_hp++;
+	}
+	
+	
 	laser_cnt++;
 }
 void iDraw() {
@@ -238,6 +256,14 @@ void iDraw() {
 		boulder_show();
 		healbox_show();
 		laser_show();
+		if(laser_usable){
+			iSetColor(38,150,40);
+			iText(laser_state_x,laser_state_y,laser_status,GLUT_BITMAP_TIMES_ROMAN_24);
+		}
+		if(!laser_usable){
+			iSetColor(255,0,0);
+			iText(laser_state_x,laser_state_y,laser_status,GLUT_BITMAP_TIMES_ROMAN_24);
+		}
 		if(collision_check){
 			iShowBMP2(collision_x,collision_y,collision,0);
 			col_cnt++;
@@ -340,8 +366,8 @@ void asteroid_clear()
 	for(i=0;i<asteroid_number;i++){
 		asteroid[i].in=false;
 		asteroid[i].alive=false;
-		asteroid[i].dx=4;
-		asteroid[i].dy=4;
+		asteroid[i].dx=2.5;
+		asteroid[i].dy=2.5;
 	}
 }
 void score_clear()
@@ -451,12 +477,12 @@ void iKeyboard(unsigned char key) {
 			}
 		}
 		if(key == 'e'){
-			if(!laser_active){
+			if(!laser_active && laser_usable){
 				laser_x=space_x+35;
 				laser_y=90;
 				laser_active=true;
 			}
-			else{
+			else if(laser_active){
 				laser_active=false;
 				laser_cnt=0;
 			}
@@ -483,8 +509,8 @@ void asteroid_collision_check()
 						collision_check=true;
 						own_bullet[i].y=-20;
 						asteroid[j].alive=false;
-						asteroid[j].dx=4;
-						asteroid[j].dy=4;
+						asteroid[j].dx=2.5;
+						asteroid[j].dy=2.5;
 						collision_x=asteroid[j].x;
 						collision_y=asteroid[j].y;
 						asteroid[j].in=false;
@@ -539,8 +565,8 @@ void spaceship_asteroid_collision()
 		for(i=0;i<asteroid_number;i++){
 			if((space_x+90 > asteroid[i].x && space_x < asteroid[i].x+40) && (space_y+90 > asteroid[i].y && space_y < asteroid[i].y+40)){
 				asteroid[i].alive=false;
-				asteroid[i].dx=4;
-				asteroid[i].dy=4;
+				asteroid[i].dx=2.5;
+				asteroid[i].dy=2.5;
 				collision_x=asteroid[i].x;
 				collision_y=asteroid[i].y-10;
 				collision_check=true;
@@ -577,8 +603,8 @@ void laser_collision()
 		for(i=0;i<asteroid_number;i++){
 			if((laser_x+20 > asteroid[i].x && laser_x < asteroid[i].x+40) && (laser_y+670 > asteroid[i].y && laser_y < asteroid[i].y+40)){
 				asteroid[i].alive=false;
-				asteroid[i].dx=4;
-				asteroid[i].dy=4;
+				asteroid[i].dx=2.5;
+				asteroid[i].dy=2.5;
 				asteroid[i].in=false;
 				collision_x=asteroid[i].x;
 				collision_y=asteroid[i].y;
