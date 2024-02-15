@@ -12,7 +12,7 @@ struct asteroids{
 	double x;
 	double y;
 	bool alive,in=false;
-	double dx=2.5,dy=2.5;
+	double dx=5,dy=5;
 };
 struct f_bullet{
 	double x,y;
@@ -96,7 +96,7 @@ char health[30]="Health: 200";
 void asteroid_change()
 {
 	int i;
-	if(!pause){
+	if(page_state==1 && !pause){
 		for(i=0;i<asteroid_number;i++){
 			if(asteroid[i].alive){
 				asteroid[i].x-=asteroid[i].dx;
@@ -127,15 +127,15 @@ void asteroid_show()
 			iShowBMP2(asteroid[i].x,asteroid[i].y,asteroid_image,0);
 		}
 	}
-	asteroid_change();
+	//asteroid_change();
 }
 void bullet_change()
 {
 	int i;
-	if(!pause){
+	if(page_state==1 && !pause){
 		for(i=1;i<bullet_number;i++){
 			if(own_bullet[i].bullet_show){
-				own_bullet[i].y+=3;
+				own_bullet[i].y+=5;
 				if(own_bullet[i].y>=screen_height){
 					own_bullet[i].bullet_show=false;
 					own_bullet[i].y=-20;
@@ -152,15 +152,15 @@ void bulletshow()
 			iShowBMP2(own_bullet[i].x,own_bullet[i].y,my_bullet,0);
 		}
 	}
-	bullet_change();
+	//bullet_change();
 }
 void boulder_change()
 {
 	int i;
-	if(!pause && boulder_active){
+	if(page_state==1 && !pause && boulder_active){
 		for(i=0;i<7;i++){
 			if(space_boulder[i].alive){
-				space_boulder[i].y-=3;
+				space_boulder[i].y-=6;
 				if(space_boulder[i].y<=-60){
 					space_boulder[i].x=rand()%780;
 					if(space_boulder[i].x<60)space_boulder[i].x=60;
@@ -186,15 +186,19 @@ void boulder_show()
 			iShowBMP2(space_boulder[i].x,space_boulder[i].y,boulder,0);
 		}
 	}
-	boulder_change();
+	//boulder_change();
 }
 void healbox_show()
 {
 	if(healbox_active){
 		iShowBMP2(healbox_x,healbox_y,healbox,0);
 	}
-	if(healbox_active && !pause){
-		healbox_y-=2.5;
+	
+}
+void healbox_change()
+{
+	if(page_state==1 && healbox_active && !pause){
+		healbox_y-=5;
 		if(healbox_y<=-30){
 			healbox_active=false;
 		}
@@ -210,7 +214,11 @@ void laser_show(){
 	if(laser_active && laser_cnt%10!=0){
 		iShowBMP2(laser_x,laser_y,laser,0);
 	}
-	if(!pause && laser_active){
+	laser_cnt++;
+}
+void laser_change()
+{
+	if(page_state==1 && !pause && laser_active){
 		laser_x=space_x+35;
 		laser_hp--;
 		if(laser_hp<=0){
@@ -219,17 +227,14 @@ void laser_show(){
 			sprintf(laser_status,"Laser: Not Ready");
 		}
 	}
-	if(!pause && !laser_active){
-		if(laser_hp>=500){
+	if(page_state==1 && !pause && !laser_active){
+		if(laser_hp>=200){
 			laser_usable=true;
 			sprintf(laser_status,"Laser: Ready");
 		}
 		else 
 			laser_hp++;
 	}
-	
-	
-	laser_cnt++;
 }
 void iDraw() {
 	//place your drawing codes here
@@ -366,8 +371,8 @@ void asteroid_clear()
 	for(i=0;i<asteroid_number;i++){
 		asteroid[i].in=false;
 		asteroid[i].alive=false;
-		asteroid[i].dx=2.5;
-		asteroid[i].dy=2.5;
+		asteroid[i].dx=5;
+		asteroid[i].dy=5;
 	}
 }
 void score_clear()
@@ -509,8 +514,8 @@ void asteroid_collision_check()
 						collision_check=true;
 						own_bullet[i].y=-20;
 						asteroid[j].alive=false;
-						asteroid[j].dx=2.5;
-						asteroid[j].dy=2.5;
+						asteroid[j].dx=5;
+						asteroid[j].dy=5;
 						collision_x=asteroid[j].x;
 						collision_y=asteroid[j].y;
 						asteroid[j].in=false;
@@ -565,8 +570,8 @@ void spaceship_asteroid_collision()
 		for(i=0;i<asteroid_number;i++){
 			if((space_x+90 > asteroid[i].x && space_x < asteroid[i].x+40) && (space_y+90 > asteroid[i].y && space_y < asteroid[i].y+40)){
 				asteroid[i].alive=false;
-				asteroid[i].dx=2.5;
-				asteroid[i].dy=2.5;
+				asteroid[i].dx=5;
+				asteroid[i].dy=5;
 				collision_x=asteroid[i].x;
 				collision_y=asteroid[i].y-10;
 				collision_check=true;
@@ -603,8 +608,8 @@ void laser_collision()
 		for(i=0;i<asteroid_number;i++){
 			if((laser_x+20 > asteroid[i].x && laser_x < asteroid[i].x+40) && (laser_y+670 > asteroid[i].y && laser_y < asteroid[i].y+40)){
 				asteroid[i].alive=false;
-				asteroid[i].dx=2.5;
-				asteroid[i].dy=2.5;
+				asteroid[i].dx=5;
+				asteroid[i].dy=5;
 				asteroid[i].in=false;
 				collision_x=asteroid[i].x;
 				collision_y=asteroid[i].y;
@@ -639,6 +644,14 @@ void laser_collision()
 		}
 	}
 }
+void change()
+{
+	asteroid_change();
+	bullet_change();
+	boulder_change();
+	healbox_change();
+	laser_change();
+}
 void healbox_init()
 {
 	if(space_health<=80 && !healbox_active){
@@ -650,6 +663,7 @@ void healbox_init()
 }
 
 int main() {
+	iSetTimer(25,change);
 	iSetTimer(25,asteroid_collision_check);
 	iSetTimer(25,boulder_collision_check);
 	iSetTimer(25,spaceship_asteroid_collision);
