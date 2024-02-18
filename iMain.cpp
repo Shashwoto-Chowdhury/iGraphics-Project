@@ -76,6 +76,8 @@ char quit[30]="images\\quit.bmp";
 char title[30]="images\\title.bmp";
 char back[30]="images\\return.bmp";
 char s_title[30]="images\\sTitle.bmp";
+char i_title[30]="images\\iTitle.bmp";
+char control[30]="images\\controls.bmp";
 char l_music[30]="images\\lobbymusic.bmp";
 char g_music[30]="images\\gamemusic.bmp";
 char volume[30]="images\\volume.bmp";
@@ -309,11 +311,13 @@ void iDraw() {
 			iShowBMP2(604,424,mute,0);
 		}
 
-		iShowBMP2(212.5,100,back,0);
+		iShowBMP2(212.5,50,back,0);
 	}
 	if(page_state==4){
 		iShowBMP(0,0,img[page_state]);
-		iShowBMP2(212.5,100,back,0);
+		iShowBMP(0,624,i_title);
+		iShowBMP(110,192,control);
+		iShowBMP2(212.5,50,back,0);
 		
 	}
 	//iText(40, 40, "Hi, I am iGraphics");
@@ -417,7 +421,7 @@ void iMouse(int button, int state, int mx, int my) {
 		}
 	}
 	if(page_state==3){
-		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=212.5&&mx<=627.5&&my>=100&&my<=200){
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=212.5&&mx<=627.5&&my>=50&&my<=150){
 			page_state=0;
 		}
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=604 && mx<=697 && my>=524 && my<=624){
@@ -439,6 +443,11 @@ void iMouse(int button, int state, int mx, int my) {
 				//PlaySound(game_sound, NULL , SND_LOOP|SND_ASYNC);
 				gmusic_on=true;
 			}
+		}
+	}
+	if(page_state==4){
+	 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=212.5&&mx<=627.5&&my>=50&&my<=150){
+			page_state=0;
 		}
 	}
 
@@ -661,6 +670,7 @@ void healbox_init()
 		healbox_y=screen_height+rand()%200;
 	}
 }
+
 
 int main() {
 	iSetTimer(25,change);
