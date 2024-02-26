@@ -24,6 +24,10 @@ struct space_boulders
 	int health=90;
 	bool alive=false;
 };
+struct high_scores{
+	char name[30];
+	int score;
+};
 
 double space_x=370;
 double space_y=0;
@@ -36,6 +40,7 @@ int cnt=0;
 asteroids asteroid[asteroid_number];
 f_bullet own_bullet[bullet_number];
 space_boulders space_boulder[boulder_number];
+high_scores players[5];
 
 int score=0;
 double score_x=650;
@@ -90,9 +95,14 @@ char collision[30]="images\\collision.bmp";
 char collision2[30]="images\\collision2.bmp";
 char healbox[30]="images\\health.bmp";
 char laser[30]="images\\laser.bmp";
+char gameover[30]="images\\gameover.bmp";
 
 char score_text[30]="Score: 0";
+char score_show[30]="You Scored: 0";
 char health[30]="Health: 200";
+
+char tmp_name[1000];
+int index=0;
 
 
 void asteroid_change()
@@ -320,6 +330,13 @@ void iDraw() {
 		iShowBMP2(212.5,50,back,0);
 		
 	}
+	if(page_state==-1){
+		iShowBMP(0,0,gameover);
+		iSetColor(255,255,255);
+		iText(350,470,score_show,GLUT_BITMAP_TIMES_ROMAN_24);
+		iSetColor(0,0,0);
+		iText(286,250,tmp_name,GLUT_BITMAP_TIMES_ROMAN_24);
+	}
 	//iText(40, 40, "Hi, I am iGraphics");
 }
 
@@ -450,13 +467,20 @@ void iMouse(int button, int state, int mx, int my) {
 			page_state=0;
 		}
 	}
+	if(page_state == -1){
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=375&&mx<=610&&my>=137&&my<=205){
+			page_state=0;
+			index=0;
+		}
+	
+	}
 
 }
 
 void iKeyboard(unsigned char key) {
-	if (key == 'q') {
-		exit(0);
-	}
+	// if (key == 'q') {
+	// 	exit(0);
+	// }
 	if(page_state==1){
 		if(key == 'a'){
 			if(!pause){
@@ -474,13 +498,22 @@ void iKeyboard(unsigned char key) {
 				}
 			}
 		}
-		if(key == 'w'){
-			page_state=0;
+		if(key == 'q'){
+			sprintf(score_show,"You Scored: %d",score);
+			page_state=-1;
 			cnt=0;
+			if(music_on){
+				PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
+			}
+			else{
+				PlaySound(0,0,0);
+			}
 			bullet_clear();
 			asteroid_clear();
 			score_clear();
 			health_init();
+			laser_active=false;
+			boulder_active=false;
 		}
 		if(key == 'p'){
 			if(pause){
@@ -502,12 +535,30 @@ void iKeyboard(unsigned char key) {
 			}
 		}
 	}
+	if(page_state == -1){
+		if(index==0 && key == 'q'){
+
+		}
+		else{
+			if(key != '\b'){
+				tmp_name[index]=key;
+				index++;
+				tmp_name[index]='\0';
+			}
+			else{
+				if(index>0){
+					index--;
+					tmp_name[index]='\0';
+				}
+			}
+		}
+	}
 	
 	//place your codes for other keys here
 }
 
 void iSpecialKeyboard(unsigned char key) {
-
+	
 	
 }
 
@@ -586,7 +637,25 @@ void spaceship_asteroid_collision()
 				collision_check=true;
 				asteroid[i].in=false;
 				space_health-=5;
-				sprintf(health,"Health: %d",space_health);
+				if(space_health<=0){
+					sprintf(score_show,"You Scored: %d",score);
+					page_state=-1;
+					cnt=0;
+					if(music_on){
+						PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
+					}
+					else{
+						PlaySound(0,0,0);
+					}
+					bullet_clear();
+					asteroid_clear();
+					score_clear();
+					health_init();
+					laser_active=false;
+					boulder_active=false;
+				}
+				else 
+					sprintf(health,"Health: %d",space_health);
 				break;
 			}
 		}
@@ -603,7 +672,25 @@ void spaceship_boulder_collision()
 				collsion2_x=space_boulder[i].x;
 				collision2_y=space_boulder[i].y;
 				space_health-=10;
-				sprintf(health,"Health: %d",space_health);
+				if(space_health<=0){
+					sprintf(score_show,"You Scored: %d",score);
+					page_state=-1;
+					cnt=0;
+					if(music_on){
+						PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
+					}
+					else{
+						PlaySound(0,0,0);
+					}
+					bullet_clear();
+					asteroid_clear();
+					score_clear();
+					health_init();
+					laser_active=false;
+					boulder_active=false;
+				}
+				else
+					sprintf(health,"Health: %d",space_health);
 				break;
 			}
 			//printf("Position of %d: %lf %lf\n",i,space_boulder[i].x,space_boulder[i].y);
@@ -661,6 +748,14 @@ void change()
 	healbox_change();
 	laser_change();
 }
+void collisions()
+{
+	asteroid_collision_check();
+	boulder_collision_check();
+	spaceship_asteroid_collision();
+	spaceship_boulder_collision();
+	laser_collision();
+}
 void healbox_init()
 {
 	if(space_health<=80 && !healbox_active){
@@ -673,13 +768,15 @@ void healbox_init()
 
 
 int main() {
+	srand(time(0));
 	iSetTimer(25,change);
-	iSetTimer(25,asteroid_collision_check);
-	iSetTimer(25,boulder_collision_check);
-	iSetTimer(25,spaceship_asteroid_collision);
-	iSetTimer(25,spaceship_boulder_collision);
+	// iSetTimer(25,asteroid_collision_check);
+	// iSetTimer(25,boulder_collision_check);
+	// iSetTimer(25,spaceship_asteroid_collision);
+	// iSetTimer(25,spaceship_boulder_collision);
+	// iSetTimer(25,laser_collision);
+	iSetTimer(25,collisions);
 	iSetTimer(10000,healbox_init);
-	iSetTimer(25,laser_collision);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
