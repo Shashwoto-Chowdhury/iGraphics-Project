@@ -28,6 +28,14 @@ struct high_scores{
 	char name[30];
 	int score;
 };
+struct ENEMY{
+	double x,y;
+	bool vertical=true;
+	bool alive=false;
+	double dx=5,dy=5;
+	double health=100;
+	double bullet_x[5],bullet_y[5];
+};
 
 double space_x=370;
 double space_y=0;
@@ -41,6 +49,7 @@ asteroids asteroid[asteroid_number];
 f_bullet own_bullet[bullet_number];
 space_boulders space_boulder[boulder_number];
 high_scores players[5];
+ENEMY enemy[2];
 
 int score=0;
 double score_x=650;
@@ -88,6 +97,7 @@ char g_music[30]="images\\gamemusic.bmp";
 char volume[30]="images\\volume.bmp";
 char mute[30]="images\\mute.bmp";
 char spaceship[30]="images\\spaceship.bmp";
+char enemyship[30]="images\\enemyship.bmp";
 char asteroid_image[30]="images\\asteroid.bmp";
 char boulder[30]="images\\boulder.bmp";
 char my_bullet[30]="images\\sbullet.bmp";
@@ -165,6 +175,15 @@ void bulletshow()
 		}
 	}
 	//bullet_change();
+}
+void enemyship_show()
+{
+	int i;
+	for(i=0;i<2;i++){
+		if(enemy[i].alive){
+			iShowBMP2(enemy[i].x,enemy[i].y,enemyship,0);
+		}
+	}
 }
 void boulder_change()
 {
@@ -273,6 +292,7 @@ void iDraw() {
 		boulder_show();
 		healbox_show();
 		laser_show();
+		enemyship_show();
 		if(laser_usable){
 			iSetColor(38,150,40);
 			iText(laser_state_x,laser_state_y,laser_status,GLUT_BITMAP_TIMES_ROMAN_24);
@@ -401,6 +421,30 @@ void score_clear()
 	score=0;
 	sprintf(score_text,"Score: %d",score);
 }
+void boulder_clear()
+{
+	int i;
+	boulder_active=false;
+	for(i=0;i<boulder_number;i++){
+		//space_boulder[i].x=-70;
+		space_boulder[i].y=-70;
+		space_boulder[i].health=90;
+		space_boulder[i].alive=false;
+	}
+}
+void enemyship_clear()
+{
+	int i;
+	for(i=0;i<2;i++){
+		enemy[i].x=0;
+		enemy[i].y=-200;
+		enemy[i].alive=false;
+		enemy[i].vertical=true;
+		enemy[i].dx=5;
+		enemy[i].dy=5;
+		enemy[i].health=100;
+	}
+}
 void health_init()
 {
 	space_health=200;
@@ -471,6 +515,7 @@ void iMouse(int button, int state, int mx, int my) {
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=375&&mx<=610&&my>=137&&my<=205){
 			page_state=0;
 			index=0;
+			tmp_name[0]='\0';
 		}
 	
 	}
@@ -513,7 +558,10 @@ void iKeyboard(unsigned char key) {
 			score_clear();
 			health_init();
 			laser_active=false;
-			boulder_active=false;
+			boulder_clear();
+			space_x=370;
+			space_y=0;
+			enemyship_clear();
 		}
 		if(key == 'p'){
 			if(pause){
@@ -561,7 +609,44 @@ void iSpecialKeyboard(unsigned char key) {
 	
 	
 }
-
+void enemyship_init()
+{
+	int i;
+	if(rand()%3==0 && page_state==1 && !pause){
+		printf("Hello\n");
+		for(i=0;i<2;i++){
+			if(!enemy[i].alive){
+				enemy[i].x=rand()%730;
+				if(enemy[i].x<90)enemy[i].x=90;
+				enemy[i].y=screen_height+rand()%200;
+				enemy[i].alive=true;
+				enemy[i].vertical=true;
+			}
+		}
+	}
+}
+void enemyship_change()
+{
+	int i;
+	if(page_state==1 && !pause){
+		for(i=0;i<2;i++){
+			if(enemy[i].alive){
+				if(enemy[i].vertical){
+					enemy[i].y-=enemy[i].dy;
+					if(enemy[i].y<=650){
+						enemy[i].vertical=false;
+					}
+				}
+				else{
+					enemy[i].x-=enemy[i].dx;
+					if(enemy[i].x<=0 || enemy[i].x>=840-90){
+						enemy[i].dx*=(-1);
+					}
+				}
+			}
+		}
+	}
+}
 void asteroid_collision_check()
 {
 	int i,j;
@@ -652,7 +737,10 @@ void spaceship_asteroid_collision()
 					score_clear();
 					health_init();
 					laser_active=false;
-					boulder_active=false;
+					boulder_clear();
+					space_x=370;
+					space_y=0;
+					enemyship_clear();
 				}
 				else 
 					sprintf(health,"Health: %d",space_health);
@@ -687,7 +775,10 @@ void spaceship_boulder_collision()
 					score_clear();
 					health_init();
 					laser_active=false;
-					boulder_active=false;
+					boulder_clear();
+					space_x=370;
+					space_y=0;
+					enemyship_clear();
 				}
 				else
 					sprintf(health,"Health: %d",space_health);
@@ -747,6 +838,7 @@ void change()
 	boulder_change();
 	healbox_change();
 	laser_change();
+	enemyship_change();
 }
 void collisions()
 {
@@ -777,6 +869,7 @@ int main() {
 	// iSetTimer(25,laser_collision);
 	iSetTimer(25,collisions);
 	iSetTimer(10000,healbox_init);
+	iSetTimer(5000,enemyship_init);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
