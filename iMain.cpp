@@ -27,6 +27,7 @@ struct space_boulders
 struct high_scores{
 	char name[30];
 	int score;
+	char score_text[30];
 };
 struct ENEMY{
 	double x,y;
@@ -34,7 +35,9 @@ struct ENEMY{
 	bool alive=false;
 	double dx=5,dy=5;
 	double health=100;
-	double bullet_x[5],bullet_y[5];
+	int e_cnt=0;
+	double bullet_x[500],bullet_y[500];
+	bool bullet_show[500];
 };
 
 double space_x=370;
@@ -45,11 +48,13 @@ double health_x=650;
 double health_y=710; 
 
 int cnt=0;
+
 asteroids asteroid[asteroid_number];
 f_bullet own_bullet[bullet_number];
 space_boulders space_boulder[boulder_number];
 high_scores players[5];
 ENEMY enemy[2];
+FILE *fp;
 
 int score=0;
 double score_x=650;
@@ -105,6 +110,7 @@ char collision[30]="images\\collision.bmp";
 char collision2[30]="images\\collision2.bmp";
 char healbox[30]="images\\health.bmp";
 char laser[30]="images\\laser.bmp";
+char enemybullet[30]="images\\enemybullet.bmp";
 char gameover[30]="images\\gameover.bmp";
 
 char score_text[30]="Score: 0";
@@ -267,6 +273,17 @@ void laser_change()
 			laser_hp++;
 	}
 }
+void enemybulletshow()
+{
+	int i,j;
+	for(i=0;i<2;i++){
+		for(j=0;j<500;j++){
+			if(enemy[i].bullet_show[j]){
+				iShowBMP2(enemy[i].bullet_x[j],enemy[i].bullet_y[j],enemybullet,0);
+			}
+		}
+	}
+}
 void iDraw() {
 	//place your drawing codes here
 	iClear();
@@ -293,6 +310,7 @@ void iDraw() {
 		healbox_show();
 		laser_show();
 		enemyship_show();
+		enemybulletshow();
 		if(laser_usable){
 			iSetColor(38,150,40);
 			iText(laser_state_x,laser_state_y,laser_status,GLUT_BITMAP_TIMES_ROMAN_24);
@@ -320,7 +338,26 @@ void iDraw() {
 	}
 	if(page_state==2){
 		iShowBMP(0,0,img[page_state]);
-		iShowBMP2(212.5,100,back,0);
+		iShowBMP(0,624,s_title);
+		iSetColor(54,162,208);
+		iFilledRectangle(80,250,700,300);
+		iSetColor(0,0,0);
+		iText(100,500,"1",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,500,players[0].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,500,players[0].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(100,450,"2",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,450,players[1].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,450,players[1].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(100,400,"3",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,400,players[2].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,400,players[2].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(100,350,"4",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,350,players[3].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,350,players[3].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(100,300,"5",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,300,players[4].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,300,players[4].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iShowBMP2(212.5,50,back,0);
 	}
 
 	if(page_state==3){
@@ -445,6 +482,17 @@ void enemyship_clear()
 		enemy[i].health=100;
 	}
 }
+void enemybullet_clear()
+{
+	int i,j;
+	for(i=0;i<2;i++){
+		for(j=0;j<500;j++){
+			enemy[i].bullet_x[j]=0;
+			enemy[i].bullet_y[j]=-1000;
+			enemy[i].bullet_show[j]=false;
+		}
+	}
+}
 void health_init()
 {
 	space_health=200;
@@ -468,6 +516,12 @@ void iMouse(int button, int state, int mx, int my) {
 		}
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=390&&my<=490){
 			page_state=2;
+			fp=fopen("score.txt","r");
+			for(int i=0;i<5;i++){
+				fscanf(fp,"%s %d",players[i].name,&players[i].score);
+				sprintf(players[i].score_text,"%d",players[i].score);
+			}
+			fclose(fp);
 		}
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=270&&my<=370){
 			page_state=3;
@@ -479,6 +533,11 @@ void iMouse(int button, int state, int mx, int my) {
 	if(page_state==1){
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 			if(!pause && !laser_active)bullet_initialize();
+		}
+	}
+	if(page_state==2){
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=212.5&&mx<=627.5&&my>=50&&my<=150){
+			page_state=0;
 		}
 	}
 	if(page_state==3){
@@ -512,12 +571,52 @@ void iMouse(int button, int state, int mx, int my) {
 		}
 	}
 	if(page_state == -1){
+		int i;
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=375&&mx<=610&&my>=137&&my<=205){
 			page_state=0;
 			index=0;
+			fp=fopen("score.txt","r");
+			for(i=0;i<5;i++){
+				fscanf(fp,"%s %d",players[i].name,&players[i].score);
+				//sprintf(players[i].score_text,"%d",players[i].score);
+			}
+			fclose(fp);
+			fp=fopen("score.txt","w");
+			for(i=0;i<5;i++){
+				if(score>players[i].score){
+					int j;
+					for(j=4;j>i;j--){
+						players[j].score=players[j-1].score;
+						strcpy(players[j].name,players[j-1].name);
+					}
+					players[i].score=score;
+					if(strlen(tmp_name)==0)strcpy(players[i].name,"Player");
+					else strcpy(players[i].name,tmp_name);
+					//sprintf(players[i].score_text,"%d",players[i].score);
+					break;
+				}
+			}
+			for(i=0;i<5;i++){
+				printf("%s %d\n",players[i].name,players[i].score);
+				fprintf(fp,"%s %d\n",players[i].name,players[i].score);
+			}
+			fclose(fp);
 			tmp_name[0]='\0';
 		}
-	
+		bullet_clear();
+		asteroid_clear();
+		score_clear();
+		health_init();
+		laser_active=false;
+		laser_usable=false;
+		laser_hp=0;
+		sprintf(laser_status,"Laser: Not Ready");
+		boulder_clear();
+		space_x=370;
+		space_y=0;
+		enemyship_clear();
+		enemybullet_clear();
+		healbox_active=false;
 	}
 
 }
@@ -553,15 +652,6 @@ void iKeyboard(unsigned char key) {
 			else{
 				PlaySound(0,0,0);
 			}
-			bullet_clear();
-			asteroid_clear();
-			score_clear();
-			health_init();
-			laser_active=false;
-			boulder_clear();
-			space_x=370;
-			space_y=0;
-			enemyship_clear();
 		}
 		if(key == 'p'){
 			if(pause){
@@ -621,9 +711,46 @@ void enemyship_init()
 				enemy[i].y=screen_height+rand()%200;
 				enemy[i].alive=true;
 				enemy[i].vertical=true;
+				enemy[i].health=100;
 			}
 		}
 	}
+}
+void enemy_bullet_initialize()
+{
+	int i,j;
+	if(page_state==1 && !pause){
+		for(i=0;i<2;i++){
+			if(enemy[i].x + 20>=space_x && enemy[i].x<=space_x+20 && enemy[i].alive){
+				if(!enemy[i].bullet_show[enemy[i].e_cnt]){
+					enemy[i].bullet_x[enemy[i].e_cnt]=enemy[i].x+45;
+					enemy[i].bullet_y[enemy[i].e_cnt]=enemy[i].y;
+					enemy[i].bullet_show[enemy[i].e_cnt]=true;
+					enemy[i].e_cnt++;
+				}
+				if(enemy[i].e_cnt>=500)enemy[i].e_cnt=0;
+			}
+		}
+	}
+	
+}
+void enemy_bullet_change()
+{
+	int i,j;
+	if(page_state==1 && !pause){
+		for(i=0;i<2;i++){
+			for(j=0;j<500;j++){
+				if(enemy[i].bullet_show[j]){
+					enemy[i].bullet_y[j]-=5;
+					if(enemy[i].bullet_y[j]<=0){
+						enemy[i].bullet_show[j]=false;
+						enemy[i].bullet_y[j]=-20;
+					}
+				}
+			}
+		}
+	}
+
 }
 void enemyship_change()
 {
@@ -638,9 +765,14 @@ void enemyship_change()
 					}
 				}
 				else{
-					enemy[i].x-=enemy[i].dx;
-					if(enemy[i].x<=0 || enemy[i].x>=840-90){
-						enemy[i].dx*=(-1);
+					if(enemy[i].x+20 >= space_x && enemy[i].x<=space_x+20){
+						//enemy_bullet_initialize(i);
+					}
+					else{
+						enemy[i].x-=enemy[i].dx;
+						if(enemy[i].x<=0 || enemy[i].x>=840-90){
+							enemy[i].dx*=(-1);
+						}
 					}
 				}
 			}
@@ -694,6 +826,8 @@ void boulder_collision_check()
 							collision2_check=true;
 							collsion2_x=space_boulder[j].x;
 							collision2_y=space_boulder[j].y;
+							score+=10;
+							sprintf(score_text,"Score: %d",score);
 						}
 						else{
 							collision_check=true;
@@ -732,19 +866,42 @@ void spaceship_asteroid_collision()
 					else{
 						PlaySound(0,0,0);
 					}
-					bullet_clear();
-					asteroid_clear();
-					score_clear();
-					health_init();
-					laser_active=false;
-					boulder_clear();
-					space_x=370;
-					space_y=0;
-					enemyship_clear();
 				}
 				else 
 					sprintf(health,"Health: %d",space_health);
 				break;
+			}
+		}
+	}
+}
+void enemyspaceship_collision()
+{
+	int i,j;
+	if(page_state==1 && !pause){
+		for(i=0;i<bullet_number;i++){
+			if(own_bullet[i].bullet_show){
+				for(j=0;j<2;j++){
+					if((own_bullet[i].x+10 > enemy[j].x && own_bullet[i].x < enemy[j].x+90) && (own_bullet[i].y+15 > enemy[j].y && own_bullet[i].y < enemy[j].y+90)){
+						own_bullet[i].bullet_show=false;
+						own_bullet[i].y=-20;
+						enemy[j].health-=20;
+						if(enemy[j].health<=0){
+							enemy[j].alive=false;
+							score+=20;
+							sprintf(score_text,"Score: %d",score);
+							collision2_check=true;
+							collsion2_x=enemy[j].x;
+							collision2_y=enemy[j].y;
+							enemy[j].y=-200;
+						}
+						else{
+							collision_check=true;
+							collision_x=enemy[j].x;
+							collision_y=enemy[j].y;
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -770,21 +927,45 @@ void spaceship_boulder_collision()
 					else{
 						PlaySound(0,0,0);
 					}
-					bullet_clear();
-					asteroid_clear();
-					score_clear();
-					health_init();
-					laser_active=false;
-					boulder_clear();
-					space_x=370;
-					space_y=0;
-					enemyship_clear();
 				}
 				else
 					sprintf(health,"Health: %d",space_health);
 				break;
 			}
 			//printf("Position of %d: %lf %lf\n",i,space_boulder[i].x,space_boulder[i].y);
+		}
+	}
+}
+void enemybullet_spaceship_collision()
+{
+	int i;
+	if(page_state==1 && !pause){
+		for(i=0;i<2;i++){
+			for(int j=0;j<500;j++){
+				if(enemy[i].bullet_show[j]){
+					if((enemy[i].bullet_x[j]+10 > space_x && enemy[i].bullet_x[j] < space_x+90) && (enemy[i].bullet_y[j]+15 > space_y && enemy[i].bullet_y[j] < space_y+90)){
+						enemy[i].bullet_show[j]=false;
+						collision_check=true;
+						collision_x=enemy[i].bullet_x[j];
+						collision_y=enemy[i].bullet_y[j];
+						enemy[i].bullet_y[j]=-1000;
+						space_health-=10;
+						if(space_health<=0){
+							sprintf(score_show,"You Scored: %d",score);
+							page_state=-1;
+							cnt=0;
+							if(music_on){
+								PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
+							}
+							else{
+								PlaySound(0,0,0);
+							}
+						}
+						else
+							sprintf(health,"Health: %d",space_health);
+					}
+				}
+			}
 		}
 	}
 }
@@ -819,6 +1000,8 @@ void laser_collision()
 						collision2_check=true;
 						collsion2_x=space_boulder[i].x;
 						collision2_y=space_boulder[i].y;
+						score+=10;
+						sprintf(score_text,"Score: %d",score);
 					}
 					else{
 						collision_check=true;
@@ -827,6 +1010,26 @@ void laser_collision()
 					}
 					break;
 				}
+			}
+		}
+		for(i=0;i<2;i++){
+			if((laser_x+20 > enemy[i].x && laser_x < enemy[i].x+90) && (laser_y+670 > enemy[i].y && laser_y < enemy[i].y+90)){
+				enemy[i].health-=20;
+				if(enemy[i].health<=0){
+					enemy[i].alive=false;
+					score+=20;
+					sprintf(score_text,"Score: %d",score);
+					collision2_check=true;
+					collsion2_x=enemy[i].x;
+					collision2_y=enemy[i].y;
+					enemy[i].y=-200;
+				}
+				else{
+					collision_check=true;
+					collision_x=enemy[i].x;
+					collision_y=enemy[i].y;
+				}
+				break;
 			}
 		}
 	}
@@ -839,6 +1042,7 @@ void change()
 	healbox_change();
 	laser_change();
 	enemyship_change();
+	enemy_bullet_change();
 }
 void collisions()
 {
@@ -846,6 +1050,8 @@ void collisions()
 	boulder_collision_check();
 	spaceship_asteroid_collision();
 	spaceship_boulder_collision();
+	enemyspaceship_collision();
+	enemybullet_spaceship_collision();
 	laser_collision();
 }
 void healbox_init()
@@ -870,6 +1076,7 @@ int main() {
 	iSetTimer(25,collisions);
 	iSetTimer(10000,healbox_init);
 	iSetTimer(5000,enemyship_init);
+	iSetTimer(300,enemy_bullet_initialize);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
