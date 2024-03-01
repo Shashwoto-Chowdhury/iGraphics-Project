@@ -47,6 +47,7 @@ int space_health=200;
 double health_x=650;
 double health_y=710; 
 
+int world=0;
 int cnt=0;
 
 asteroids asteroid[asteroid_number];
@@ -86,14 +87,18 @@ char laser_status[30]="Laser: Not Ready";
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
 
-char img[5][30]={"images\\home.bmp","images\\gamebg.bmp","images\\home.bmp","images\\home.bmp","images\\home.bmp"};
+char img[6][30]={"images\\home.bmp","images\\gamebg.bmp","images\\home.bmp","images\\home.bmp","images\\home.bmp","images\\gamebg2.bmp"};
 char play[30]="images\\play.bmp";
+char world1[30]="images\\world1.bmp";
+char world2[30]="images\\world2.bmp";
+char arenatitle[30]="images\\arenatitle.bmp";
 char high_score[30]="images\\high_score.bmp";
 char settings[30]="images\\settings.bmp";
 char instructions[30]="images\\instructions.bmp";
 char quit[30]="images\\quit.bmp";
 char title[30]="images\\title.bmp";
 char back[30]="images\\return.bmp";
+char h_title[30]="images\\hTitle.bmp";
 char s_title[30]="images\\sTitle.bmp";
 char i_title[30]="images\\iTitle.bmp";
 char control[30]="images\\controls.bmp";
@@ -101,15 +106,15 @@ char l_music[30]="images\\lobbymusic.bmp";
 char g_music[30]="images\\gamemusic.bmp";
 char volume[30]="images\\volume.bmp";
 char mute[30]="images\\mute.bmp";
-char spaceship[30]="images\\spaceship.bmp";
-char enemyship[30]="images\\enemyship.bmp";
-char asteroid_image[30]="images\\asteroid.bmp";
-char boulder[30]="images\\boulder.bmp";
+char spaceship[2][30]={"images\\spaceship.bmp","images\\spaceship2.bmp"};
+char enemyship[2][30]={"images\\enemyship.bmp","images\\enemyship2.bmp"};
+char asteroid_image[2][30]={"images\\asteroid.bmp","images\\asteroid2.bmp"};
+char boulder[2][30]={"images\\boulder.bmp","images\\boulder2.bmp"};
 char my_bullet[30]="images\\sbullet.bmp";
 char collision[30]="images\\collision.bmp";
 char collision2[30]="images\\collision2.bmp";
 char healbox[30]="images\\health.bmp";
-char laser[30]="images\\laser.bmp";
+char laser[2][30]={"images\\laser.bmp","images\\laser2.bmp"};
 char enemybullet[30]="images\\enemybullet.bmp";
 char gameover[30]="images\\gameover.bmp";
 
@@ -152,7 +157,7 @@ void asteroid_show()
 	int i;
 	for(i=0;i<asteroid_number;i++){
 		if(asteroid[i].alive){
-			iShowBMP2(asteroid[i].x,asteroid[i].y,asteroid_image,0);
+			iShowBMP2(asteroid[i].x,asteroid[i].y,asteroid_image[world],0);
 		}
 	}
 	//asteroid_change();
@@ -187,7 +192,7 @@ void enemyship_show()
 	int i;
 	for(i=0;i<2;i++){
 		if(enemy[i].alive){
-			iShowBMP2(enemy[i].x,enemy[i].y,enemyship,0);
+			iShowBMP2(enemy[i].x,enemy[i].y,enemyship[world],0);
 		}
 	}
 }
@@ -220,7 +225,7 @@ void boulder_show()
 	int i;
 	for(i=0;i<boulder_number;i++){
 		if(space_boulder[i].alive){
-			iShowBMP2(space_boulder[i].x,space_boulder[i].y,boulder,0);
+			iShowBMP2(space_boulder[i].x,space_boulder[i].y,boulder[world],0);
 		}
 	}
 	//boulder_change();
@@ -249,7 +254,7 @@ void healbox_change()
 }
 void laser_show(){
 	if(laser_active && laser_cnt%10!=0){
-		iShowBMP2(laser_x,laser_y,laser,0);
+		iShowBMP2(laser_x,laser_y,laser[world],0);
 	}
 	laser_cnt++;
 }
@@ -297,9 +302,20 @@ void iDraw() {
 		iShowBMP2(235,30,quit,0);
 
 	}
+	if(page_state==-2){
+		iShowBMP(0,0,img[0]);
+		iShowBMP2(0,624,arenatitle,0);
+		iSetColor(0,0,0);
+		iText(115,535,"Into THE DARKNESS",GLUT_BITMAP_TIMES_ROMAN_24);
+		iShowBMP(50,247,world1);
+		iText(495,535,"CARTOON WORLD",GLUT_BITMAP_TIMES_ROMAN_24);
+		iShowBMP(445,247,world2);
+		iShowBMP2(212.5,50,back,0);
+	}
 	if(page_state==1){
-		iShowBMP(0,0,img[page_state]);
-		iShowBMP2(space_x,space_y,spaceship,0);
+		if(world==0)iShowBMP(0,0,img[page_state]);
+		else iShowBMP(0,0,img[5]);
+		iShowBMP2(space_x,space_y,spaceship[world],0);
 		iSetColor(44,166,43);
 		iText(score_x,score_y,score_text,GLUT_BITMAP_TIMES_ROMAN_24);
 		iSetColor(255,255,255);
@@ -338,7 +354,7 @@ void iDraw() {
 	}
 	if(page_state==2){
 		iShowBMP(0,0,img[page_state]);
-		iShowBMP(0,624,s_title);
+		iShowBMP(0,624,h_title);
 		iSetColor(54,162,208);
 		iFilledRectangle(80,250,700,300);
 		iSetColor(0,0,0);
@@ -505,15 +521,9 @@ void iMouse(int button, int state, int mx, int my) {
 			exit(0);
 		}
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=510&&my<=610){
-			page_state=1;
-			asteroid_initialize();
-			if(gmusic_on){
-				PlaySound(game_sound, NULL , SND_LOOP|SND_ASYNC);
-			}
-			else{
-			 	PlaySound(0,0,0);
-			}
+			page_state=-2;
 		}
+
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=390&&my<=490){
 			page_state=2;
 			fp=fopen("score.txt","r");
@@ -528,6 +538,33 @@ void iMouse(int button, int state, int mx, int my) {
 		}
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=150&&my<=250){
 			page_state=4;
+		}
+	}
+	if(page_state==-2){
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=50&&mx<=395&&my>=262&&my<=524){
+			page_state=1;
+			world=0;
+			asteroid_initialize();
+			if(gmusic_on){
+				PlaySound(game_sound, NULL , SND_LOOP|SND_ASYNC);
+			}
+			else{
+			 	PlaySound(0,0,0);
+			}
+		}
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=445 && mx<=790 &&my>=262&&my<=524){
+			page_state=1;
+			world=1;
+			asteroid_initialize();
+			if(gmusic_on){
+				PlaySound(game_sound, NULL , SND_LOOP|SND_ASYNC);
+			}
+			else{
+			 	PlaySound(0,0,0);
+			}
+		}
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=212.5&&mx<=627.5&&my>=50&&my<=150){
+			page_state=0;
 		}
 	}
 	if(page_state==1){
@@ -582,9 +619,11 @@ void iMouse(int button, int state, int mx, int my) {
 			}
 			fclose(fp);
 			fp=fopen("score.txt","w");
+			printf("DEBUG: %s %d\n", tmp_name,score);
 			for(i=0;i<5;i++){
 				if(score>players[i].score){
 					int j;
+					printf("Debug: %d\n",i);
 					for(j=4;j>i;j--){
 						players[j].score=players[j-1].score;
 						strcpy(players[j].name,players[j-1].name);
@@ -1076,7 +1115,7 @@ int main() {
 	iSetTimer(25,collisions);
 	iSetTimer(10000,healbox_init);
 	iSetTimer(5000,enemyship_init);
-	iSetTimer(300,enemy_bullet_initialize);
+	iSetTimer(250,enemy_bullet_initialize);
 	if(music_on){
 		PlaySound(lobby_sound, NULL , SND_LOOP|SND_ASYNC);
 	}
