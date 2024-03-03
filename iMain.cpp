@@ -87,7 +87,7 @@ char laser_status[30]="Laser: Not Ready";
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
 
-char img[6][30]={"images\\home.bmp","images\\gamebg.bmp","images\\home.bmp","images\\home.bmp","images\\home.bmp","images\\gamebg2.bmp"};
+char img[6][30]={"images\\home.bmp","images\\gamebg.bmp","images\\highscorebg.bmp","images\\home.bmp","images\\home.bmp","images\\gamebg2.bmp"};
 char play[30]="images\\play.bmp";
 char world1[30]="images\\world1.bmp";
 char world2[30]="images\\world2.bmp";
@@ -246,7 +246,7 @@ void healbox_change()
 		}
 		if((healbox_x+30 > space_x && healbox_x < space_x+90) && (healbox_y+30 > space_y && healbox_y < space_y+90)){
 			healbox_active=false;
-			space_health+=20;
+			space_health+=15;
 			if(space_health>200)space_health=200;
 			sprintf(health,"Health: %d",space_health);
 		}
@@ -305,11 +305,11 @@ void iDraw() {
 	if(page_state==-2){
 		iShowBMP(0,0,img[0]);
 		iShowBMP2(0,624,arenatitle,0);
-		iSetColor(0,0,0);
+		iSetColor(255,255,255);
 		iText(115,535,"Into THE DARKNESS",GLUT_BITMAP_TIMES_ROMAN_24);
-		iShowBMP(50,247,world1);
+		iShowBMP(50,245,world1);
 		iText(495,535,"CARTOON WORLD",GLUT_BITMAP_TIMES_ROMAN_24);
-		iShowBMP(445,247,world2);
+		iShowBMP(445,245,world2);
 		iShowBMP2(212.5,50,back,0);
 	}
 	if(page_state==1){
@@ -355,24 +355,24 @@ void iDraw() {
 	if(page_state==2){
 		iShowBMP(0,0,img[page_state]);
 		iShowBMP(0,624,h_title);
-		iSetColor(54,162,208);
-		iFilledRectangle(80,250,700,300);
+		//iSetColor(54,162,208);
+		//iFilledRectangle(80,250,700,300);
 		iSetColor(0,0,0);
-		iText(100,500,"1",GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(200,500,players[0].name,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(650,500,players[0].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(100,450,"2",GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(200,450,players[1].name,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(650,450,players[1].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(100,400,"3",GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(200,400,players[2].name,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(650,400,players[2].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(100,350,"4",GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(200,350,players[3].name,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(650,350,players[3].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(100,300,"5",GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(200,300,players[4].name,GLUT_BITMAP_TIMES_ROMAN_24);
-		iText(650,300,players[4].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(120,480,"1",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,480,players[0].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,480,players[0].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(120,420,"2",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,420,players[1].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,420,players[1].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(120,360,"3",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,360,players[2].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,360,players[2].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(120,300,"4",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,300,players[3].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,300,players[3].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(120,240,"5",GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(200,240,players[4].name,GLUT_BITMAP_TIMES_ROMAN_24);
+		iText(650,240,players[4].score_text,GLUT_BITMAP_TIMES_ROMAN_24);
 		iShowBMP2(212.5,50,back,0);
 	}
 
@@ -610,8 +610,6 @@ void iMouse(int button, int state, int mx, int my) {
 	if(page_state == -1){
 		int i;
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=375&&mx<=610&&my>=137&&my<=205){
-			page_state=0;
-			index=0;
 			fp=fopen("score.txt","r");
 			for(i=0;i<5;i++){
 				fscanf(fp,"%s %d",players[i].name,&players[i].score);
@@ -641,21 +639,24 @@ void iMouse(int button, int state, int mx, int my) {
 			}
 			fclose(fp);
 			tmp_name[0]='\0';
+			bullet_clear();
+			asteroid_clear();
+			score_clear();
+			health_init();
+			laser_active=false;
+			laser_usable=false;
+			laser_hp=0;
+			sprintf(laser_status,"Laser: Not Ready");
+			boulder_clear();
+			space_x=370;
+			space_y=0;
+			enemyship_clear();
+			enemybullet_clear();
+			healbox_active=false;
+			page_state=0;
+			index=0;
 		}
-		bullet_clear();
-		asteroid_clear();
-		score_clear();
-		health_init();
-		laser_active=false;
-		laser_usable=false;
-		laser_hp=0;
-		sprintf(laser_status,"Laser: Not Ready");
-		boulder_clear();
-		space_x=370;
-		space_y=0;
-		enemyship_clear();
-		enemybullet_clear();
-		healbox_active=false;
+
 	}
 
 }
@@ -1095,7 +1096,7 @@ void collisions()
 }
 void healbox_init()
 {
-	if(space_health<=80 && !healbox_active){
+	if(space_health<=75 && !healbox_active){
 		healbox_active=true;
 		healbox_x=rand()%800;
 		if(healbox_x<30)healbox_x=30;
