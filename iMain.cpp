@@ -43,7 +43,7 @@ struct ENEMY{
 double space_x=370;
 double space_y=0;
 
-int space_health=200;
+int space_health=150;
 double health_x=650;
 double health_y=710; 
 
@@ -77,6 +77,10 @@ bool boulder_active=false;
 
 double healbox_x,healbox_y;
 bool healbox_active=false;
+
+double shield_x,shield_y,shieldbox_x,shieldbox_y;
+bool shield_active=false,shieldbox_show=false;
+int shield_hp=100;
 
 double laser_x,laser_y;
 double laser_state_x=650,laser_state_y=680;
@@ -114,13 +118,14 @@ char my_bullet[30]="images\\sbullet.bmp";
 char collision[30]="images\\collision.bmp";
 char collision2[30]="images\\collision2.bmp";
 char healbox[30]="images\\health.bmp";
+char shield[30]="images\\shield.bmp";
 char laser[2][30]={"images\\laser.bmp","images\\laser2.bmp"};
 char enemybullet[30]="images\\enemybullet.bmp";
 char gameover[30]="images\\gameover.bmp";
 
 char score_text[30]="Score: 0";
 char score_show[30]="You Scored: 0";
-char health[30]="Health: 200";
+char health[30]="Health: 150";
 
 char tmp_name[1000];
 int index=0;
@@ -246,17 +251,39 @@ void healbox_change()
 		}
 		if((healbox_x+30 > space_x && healbox_x < space_x+90) && (healbox_y+30 > space_y && healbox_y < space_y+90)){
 			healbox_active=false;
+			healbox_y=-30;
 			space_health+=15;
-			if(space_health>200)space_health=200;
+			if(space_health>150)space_health=150;
 			sprintf(health,"Health: %d",space_health);
 		}
 	}
 }
-void laser_show(){
-	if(laser_active && laser_cnt%10!=0){
-		iShowBMP2(laser_x,laser_y,laser[world],0);
+void shield_change(){
+	if(page_state == 1 && shield_active && !pause){
+		shield_y-=5;
+		if(shield_y<=-30){
+			shield_active=false;
+		}
+		if((shield_x+30 > space_x && shield_x < space_x+90) && (shield_y+30 > space_y && shield_y < space_y+90)){
+			shield_active=false;
+			shield_y=-30;
+			shieldbox_show=true;
+			shieldbox_x=space_x+45;
+			shieldbox_y=45;
+			shield_hp=100;
+		}
 	}
-	laser_cnt++;
+}
+void shieldbox_change()
+{
+	if(page_state == 1 && !pause && shieldbox_show){
+		shieldbox_x=space_x+45;
+		shieldbox_y=45;
+		shield_hp--;
+		if(shield_hp<=0){
+			shieldbox_show=false;
+		}
+	}
 }
 void laser_change()
 {
@@ -277,6 +304,23 @@ void laser_change()
 		else 
 			laser_hp++;
 	}
+}
+void shield_show(){
+	if(shield_active){
+		iShowBMP2(shield_x,shield_y,shield,0);
+	}
+}
+void shieldboxx_show(){
+	if(shieldbox_show){
+		iSetColor(0,255,0);
+		iCircle(shieldbox_x,shieldbox_y,50);
+	}
+}
+void laser_show(){
+	if(laser_active && laser_cnt%10!=0){
+		iShowBMP2(laser_x,laser_y,laser[world],0);
+	}
+	laser_cnt++;
 }
 void enemybulletshow()
 {
@@ -300,6 +344,8 @@ void iDraw() {
 		iShowBMP2(235,270,settings,0);
 		iShowBMP2(235,150,instructions,0);
 		iShowBMP2(235,30,quit,0);
+		iSetColor(0,0,0);
+		iText(200,20,"Developed by: Shashwoto Chowdhury  Supervised by: Md. Masum Mushfiq",GLUT_BITMAP_HELVETICA_12);
 
 	}
 	if(page_state==-2){
@@ -327,6 +373,8 @@ void iDraw() {
 		laser_show();
 		enemyship_show();
 		enemybulletshow();
+		shield_show();
+		shieldboxx_show();
 		if(laser_usable){
 			iSetColor(38,150,40);
 			iText(laser_state_x,laser_state_y,laser_status,GLUT_BITMAP_TIMES_ROMAN_24);
@@ -511,10 +559,16 @@ void enemybullet_clear()
 }
 void health_init()
 {
-	space_health=200;
+	space_health=150;
 	sprintf(health,"Health: %d",space_health);
 }
-
+void shield_clear()
+{
+	shield_active=false;
+	shieldbox_show=false;
+	shield_hp=100;
+	shield_y=-30;
+}
 void iMouse(int button, int state, int mx, int my) {
 	if(page_state==0){
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && mx>=235&&mx<=605&&my>=30&&my<=130){
@@ -652,6 +706,7 @@ void iMouse(int button, int state, int mx, int my) {
 			space_y=0;
 			enemyship_clear();
 			enemybullet_clear();
+			shield_clear();
 			healbox_active=false;
 			page_state=0;
 			index=0;
@@ -736,8 +791,24 @@ void iKeyboard(unsigned char key) {
 }
 
 void iSpecialKeyboard(unsigned char key) {
-	
-	
+	if(page_state == 1){
+		if(key == GLUT_KEY_LEFT){
+			if(!pause){
+				space_x-=5;
+				if(space_x<=0){
+					space_x=0;
+				}
+			}
+		}
+		if(key == GLUT_KEY_RIGHT){
+			if(!pause){
+				space_x+=5;
+				if(space_x>=(screen_width-90)){
+					space_x=screen_width-90;
+				}
+			}
+		}
+	}
 }
 void enemyship_init()
 {
@@ -895,7 +966,7 @@ void spaceship_asteroid_collision()
 				collision_y=asteroid[i].y-10;
 				collision_check=true;
 				asteroid[i].in=false;
-				space_health-=5;
+				if(!shieldbox_show)space_health-=5;
 				if(space_health<=0){
 					sprintf(score_show,"You Scored: %d",score);
 					page_state=-1;
@@ -956,7 +1027,7 @@ void spaceship_boulder_collision()
 				collision2_check=true;
 				collsion2_x=space_boulder[i].x;
 				collision2_y=space_boulder[i].y;
-				space_health-=10;
+				if(!shieldbox_show)space_health-=10;
 				if(space_health<=0){
 					sprintf(score_show,"You Scored: %d",score);
 					page_state=-1;
@@ -989,7 +1060,7 @@ void enemybullet_spaceship_collision()
 						collision_x=enemy[i].bullet_x[j];
 						collision_y=enemy[i].bullet_y[j];
 						enemy[i].bullet_y[j]=-1000;
-						space_health-=10;
+						if(!shieldbox_show)space_health-=10;
 						if(space_health<=0){
 							sprintf(score_show,"You Scored: %d",score);
 							page_state=-1;
@@ -1083,6 +1154,8 @@ void change()
 	laser_change();
 	enemyship_change();
 	enemy_bullet_change();
+	shield_change();
+	shieldbox_change();
 }
 void collisions()
 {
@@ -1103,7 +1176,15 @@ void healbox_init()
 		healbox_y=screen_height+rand()%200;
 	}
 }
-
+void shield_init()
+{
+	if(rand()%5==0 && page_state == 1 && !pause && !shield_active && !shieldbox_show){
+		shield_active=true;
+		shield_x=rand()%800;
+		if(shield_x<30)shield_x=30;
+		shield_y=screen_height+rand()%200;
+	}
+}
 
 int main() {
 	srand(time(0));
@@ -1115,6 +1196,7 @@ int main() {
 	// iSetTimer(25,laser_collision);
 	iSetTimer(25,collisions);
 	iSetTimer(10000,healbox_init);
+	iSetTimer(5000,shield_init);
 	iSetTimer(5000,enemyship_init);
 	iSetTimer(250,enemy_bullet_initialize);
 	if(music_on){
