@@ -773,16 +773,65 @@ void iKeyboard(unsigned char key) {
 
 		}
 		else{
-			if(key != '\b'){
+			if(key != '\b' && key !='\r'){
 				tmp_name[index]=key;
 				index++;
 				tmp_name[index]='\0';
 			}
-			else{
+			else if(key == '\b'){
 				if(index>0){
 					index--;
 					tmp_name[index]='\0';
 				}
+			}
+			else if(key == '\r'){
+				int i;
+				fp=fopen("score.txt","r");
+				for(i=0;i<5;i++){
+					fscanf(fp,"%s %d",players[i].name,&players[i].score);
+					//sprintf(players[i].score_text,"%d",players[i].score);
+				}
+				fclose(fp);
+				fp=fopen("score.txt","w");
+				printf("DEBUG: %s %d\n", tmp_name,score);
+				for(i=0;i<5;i++){
+					if(score>players[i].score){
+						int j;
+						printf("Debug: %d\n",i);
+						for(j=4;j>i;j--){
+							players[j].score=players[j-1].score;
+							strcpy(players[j].name,players[j-1].name);
+						}
+						players[i].score=score;
+						if(strlen(tmp_name)==0)strcpy(players[i].name,"Player");
+						else strcpy(players[i].name,tmp_name);
+						//sprintf(players[i].score_text,"%d",players[i].score);
+						break;
+					}
+				}
+				for(i=0;i<5;i++){
+					printf("%s %d\n",players[i].name,players[i].score);
+					fprintf(fp,"%s %d\n",players[i].name,players[i].score);
+				}
+				fclose(fp);
+				tmp_name[0]='\0';
+				bullet_clear();
+				asteroid_clear();
+				score_clear();
+				health_init();
+				laser_active=false;
+				laser_usable=false;
+				laser_hp=0;
+				sprintf(laser_status,"Laser: Not Ready");
+				boulder_clear();
+				space_x=370;
+				space_y=0;
+				enemyship_clear();
+				enemybullet_clear();
+				shield_clear();
+				healbox_active=false;
+				page_state=0;
+				index=0;
 			}
 		}
 	}
