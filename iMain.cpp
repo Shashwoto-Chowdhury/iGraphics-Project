@@ -91,7 +91,7 @@ char laser_status[30]="Laser: Not Ready";
 char lobby_sound[30]="sounds\\lobby.wav";
 char game_sound[30]="sounds\\In game.wav";
 
-char img[6][30]={"images\\home.bmp","images\\gamebg.bmp","images\\highscorebg.bmp","images\\home.bmp","images\\home.bmp","images\\gamebg2.bmp"};
+char img[6][30]={"images\\home2.bmp","images\\gamebg.bmp","images\\highscorebg.bmp","images\\home2.bmp","images\\home2.bmp","images\\gamebg2.bmp"};
 char play[30]="images\\play.bmp";
 char world1[30]="images\\world1.bmp";
 char world2[30]="images\\world2.bmp";
@@ -338,7 +338,7 @@ void iDraw() {
 	iClear();
 	if(page_state==0){
 		iShowBMP(0,0,img[page_state]);
-		iShowBMP2(120,620,title,0);
+		//iShowBMP2(120,620,title,0);
 		iShowBMP2(235,510,play,0);
 		iShowBMP2(235,390,high_score,0);
 		iShowBMP2(235,270,settings,0);
@@ -721,6 +721,9 @@ void iKeyboard(unsigned char key) {
 	// 	exit(0);
 	// }
 	if(page_state==1){
+		if(key == ' '){
+			if(!pause && !laser_active)bullet_initialize();
+		}
 		if(key == 'a'){
 			if(!pause){
 				space_x-=5;
@@ -1227,7 +1230,7 @@ void healbox_init()
 }
 void shield_init()
 {
-	if(rand()%5==0 && page_state == 1 && !pause && !shield_active && !shieldbox_show){
+	if(rand()%2==0 && page_state == 1 && !pause && !shield_active && !shieldbox_show){
 		shield_active=true;
 		shield_x=rand()%800;
 		if(shield_x<30)shield_x=30;
